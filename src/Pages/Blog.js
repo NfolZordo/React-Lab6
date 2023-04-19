@@ -1,9 +1,20 @@
 import React, { Component } from 'react';
 import { Container, Col, Row, Card, ListGroup, Pagination } from "react-bootstrap";
 import StarRatings from './star-ratings';
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { firebaseConfig } from "../firebaseConfig"
 
 class Blog extends Component {
     constructor(props) {
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        // this.state = {
+        //     show: false
+        //   };
+                  // const handleClose = () => setShow(false);
+        // const handleShow = () => setShow(true);
+
         super(props);
         this.state = {
             posts: [
@@ -150,6 +161,23 @@ class Blog extends Component {
                         </Card.Body>
                     </Card>
                 </Row>
+                {/* <Modal show={show} onHide={handleClose}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Log in</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Form>
+                            
+                            <Form.Group controlId="fromBasicCheckbox">
+                                <Form.Check type="checkbox" label="Remember me" />
+                            </Form.Group>
+
+                            <Button variant="primary" type="submit">
+                                Submit
+                            </Button>
+                        </Form>
+                    </Modal.Body>
+                </Modal> */}
             </Container>
         );
     }
