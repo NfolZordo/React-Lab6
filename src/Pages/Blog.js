@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
-import { Container, Col, Row, Card, ListGroup, Pagination } from "react-bootstrap";
+import { Container, Col, Row, Card, ListGroup, Pagination, Modal, Form, Button } from 'react-bootstrap';
+import { db, getTestDoc, addTestData } from "../firebaseConfig"
 import StarRatings from './star-ratings';
-
 
 class Blog extends Component {
     constructor(props) {
-
         super(props);
         this.state = {
             posts: [
@@ -29,17 +28,27 @@ class Blog extends Component {
                 { id: 18, category: 'category 3', title: 'Blog post 18', content: 'Lorem', date: new Date('2022-04-19') },
                 { id: 19, category: 'category 2', title: 'Blog post 19', content: 'Lorem', date: new Date('2022-04-20') },
                 { id: 20, category: 'category 1', title: 'Blog post 20', content: 'Lorem', date: new Date('2022-04-22') }
-
             ],
             currentPage: 1,
             itemsPerPage: 10,
-            ratings: {}
+            ratings: {},
+            showModal: false,
+            showCommentModal: false,
+            commentTitle: '',
+            commentContent: '',
+            comment: '',
         };
         this.sortByDateAsc = this.sortByDateAsc.bind(this);
         this.sortByDateDesc = this.sortByDateDesc.bind(this);
         this.handlePageChange = this.handlePageChange.bind(this);
         this.handleRatingClick = this.handleRatingClick.bind(this);
         this.filterByCategory = this.filterByCategory.bind(this);
+        this.openModal = this.openModal.bind(this);
+        this.closeModal = this.closeModal.bind(this);
+        this.closeCommentModal = this.closeCommentModal.bind(this);
+        this.handleCommentTitleChange = this.handleCommentTitleChange.bind(this);
+        this.handleCommentContentChange = this.handleCommentContentChange.bind(this);
+        this.submitComment = this.submitComment.bind(this);
     }
 
     sortByDateAsc() {
@@ -57,21 +66,58 @@ class Blog extends Component {
     }
 
     handleRatingClick(postId, newRating) {
-        this.setState(prevState => ({
+        this.setState((prevState) => ({
             ratings: {
                 ...prevState.ratings,
                 [postId]: newRating
             }
         }));
     }
+
     filterByCategory(category) {
-        const filteredPosts = this.state.posts.filter(post => post.category === category);
+        const filteredPosts = this.state.posts.filter((post) => post.category === category);
         this.setState({ posts: filteredPosts, isSortedAscending: false });
     }
 
-    render() {
-        const { posts, isSortedAscending, currentPage, itemsPerPage } = this.state;
+    openModal(postId) {
+        this.setState({ showModal: true, selectedPostId: postId });
+    }
 
+    closeModal() {
+        this.setState({ showModal: false });
+    }
+    openCommentModal(postId) {
+        getTestDoc(db).then(testData => {
+            this.setState({ comment: testData[postId] });
+            // this.comment = testData[postId];
+            console.log(this.comment);
+        });
+        this.setState({ showCommentModal: true, selectedPostId: postId });
+    }
+    closeCommentModal() {
+        this.setState({ showCommentModal: false });
+    }
+    handleCommentTitleChange(event) {
+        this.setState({ commentTitle: event.target.value });
+    }
+
+    handleCommentContentChange(event) {
+        this.setState({ commentContent: event.target.value });
+    }
+
+    submitComment() {
+        const { commentTitle, commentContent, selectedPostId } = this.state;
+        const postId = selectedPostId;
+        const comment = 'Заголовок: ' + commentTitle + ', Коментар: ' + commentContent + ', data: ' + new Date().toLocaleDateString();
+        console.log(`Пост: ${postId} ` + comment);
+
+        const updatedData = { [postId]: comment };
+        addTestData(db, updatedData);
+        this.closeModal();
+    }
+
+    render() {
+        const { posts, isSortedAscending, currentPage, itemsPerPage, comment, showModal, showCommentModal, commentTitle, commentContent } = this.state;
         const indexOfLastItem = currentPage * itemsPerPage;
         const indexOfFirstItem = indexOfLastItem - itemsPerPage;
         const currentItems = posts.slice(indexOfFirstItem, indexOfLastItem);
@@ -94,7 +140,7 @@ class Blog extends Component {
             <Container>
                 <Row>
                     <Col md="9">
-                        {currentItems.map(post => (
+                        {currentItems.map((post) => (
                             <div key={post.id} className="d-flex align-items-center me-5">
                                 <div className="flex-shrink-0">
                                     <img
@@ -102,10 +148,16 @@ class Blog extends Component {
                                         height={150}
                                         className="mr-3"
                                         src="https://emgotas.files.wordpress.com/2016/11/what-is-a-team.jpg"
-                                        alt="photo" />
+                                        alt="photo"
+                                    />
                                 </div>
                                 <div className="flex-grow-1 ms-3">
-                                    <a onClick={() => this.filterByCategory(post.category)} style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}>{post.category}</a>
+                                    <a
+                                        onClick={() => this.filterByCategory(post.category)}
+                                        style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+                                    >
+                                        {post.category}
+                                    </a>
                                     <h5>{post.title}</h5>
                                     <p>{post.content}</p>
                                     <StarRatings
@@ -117,7 +169,8 @@ class Blog extends Component {
                                         changeRating={(newRating) => this.handleRatingClick(post.id, newRating)}
                                     />
                                     <p>{post.date.toLocaleDateString()}</p>
-
+                                    <Button onClick={() => this.openModal(post.id)}>Коментувати</Button>
+                                    <Button onClick={() => this.openCommentModal(post.id)}>Переглянути коментарі</Button>
                                 </div>
                             </div>
                         ))}
@@ -140,16 +193,52 @@ class Blog extends Component {
                             </ListGroup>
                         </Card>
                         <Pagination>{paginationLinks}</Pagination>
-                    </Col >
+                    </Col>
                     <Card className="mt-3 bg-light">
                         <Card.Body>
                             <Card.Title>Slide widget</Card.Title>
-                            <Card.Text>
-                                Lorem
-                            </Card.Text>
+                            <Card.Text>Lorem</Card.Text>
                         </Card.Body>
                     </Card>
                 </Row>
+                <Modal show={showModal} onHide={this.closeModal}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Додати коментар</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Form>
+                            <Form.Group controlId="commentTitle">
+                                <Form.Label>Заголовок</Form.Label>
+                                <Form.Control type="text" value={commentTitle} onChange={this.handleCommentTitleChange} />
+                            </Form.Group>
+                            <Form.Group controlId="commentContent">
+                                <Form.Label>Коментар</Form.Label>
+                                <Form.Control as="textarea" rows={3} value={commentContent} onChange={this.handleCommentContentChange} />
+                            </Form.Group>
+                        </Form>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={this.closeModal}>
+                            Закрити
+                        </Button>
+                        <Button variant="primary" onClick={this.submitComment}>
+                            Підтвердити
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+                <Modal show={showCommentModal} onHide={this.closeCommentModal}>
+                    <Modal.Header closeButton>
+                        <Modal.Title></Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <div>{comment}</div>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={this.closeCommentModal}>
+                            Закрити
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
             </Container>
         );
     }
