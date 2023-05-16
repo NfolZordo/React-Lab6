@@ -170,7 +170,7 @@ class Blog extends Component {
                                     />
                                     <p>{post.date.toLocaleDateString()}</p>
                                     <Button onClick={() => this.openModal(post.id)}>Коментувати</Button>
-                                    <Button onClick={() => this.openCommentModal(post.id)}>Переглянути коментарі</Button>
+                                    <Button style={{ marginLeft: '10px' }} onClick={() => this.openCommentModal(post.id)}>Переглянути коментарі</Button>
                                 </div>
                             </div>
                         ))}
